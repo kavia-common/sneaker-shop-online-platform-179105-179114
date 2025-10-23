@@ -1,6 +1,7 @@
 import React from 'react';
-import { Routes, Route, Link, useParams } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import Catalog from '../pages/Catalog';
+import ProductDetail from '../pages/ProductDetail';
 
 // PUBLIC_INTERFACE
 export default function AppRoutes() {
@@ -8,30 +9,11 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Catalog />} />
-      <Route path="/product/:id" element={<ProductPage />} />
+      <Route path="/product/:id" element={<ProductDetail />} />
       <Route path="/cart" element={<CartPage />} />
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
-  );
-}
-
-function ProductPage() {
-  const { id } = useParams();
-  return (
-    <div className="container">
-      <h1 className="title">Sneaker Model #{id}</h1>
-      <div className="product">
-        <div className="product-media" />
-        <div className="product-info">
-          <p className="description">
-            A professional-grade sneaker with all-day comfort and modern style.
-          </p>
-          <p className="price price-lg">$129.00</p>
-          <button className="btn btn-primary">Add to Cart</button>
-        </div>
-      </div>
-    </div>
   );
 }
 
