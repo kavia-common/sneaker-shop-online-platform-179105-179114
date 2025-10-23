@@ -1,38 +1,18 @@
 import React from 'react';
 import { Routes, Route, Link, useParams } from 'react-router-dom';
+import Catalog from '../pages/Catalog';
 
 // PUBLIC_INTERFACE
 export default function AppRoutes() {
-  /** Routes for the app: home, product details, cart, checkout, and 404. */
+  /** Routes for the app: catalog (home), product details, cart, checkout, and 404. */
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route path="/" element={<Catalog />} />
       <Route path="/product/:id" element={<ProductPage />} />
       <Route path="/cart" element={<CartPage />} />
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
-  );
-}
-
-function HomePage() {
-  return (
-    <div className="container">
-      <h1 className="title">Featured Sneakers</h1>
-      <p className="description">Explore our latest drops and classics.</p>
-      <div className="grid">
-        {[1, 2, 3, 4].map((id) => (
-          <Link key={id} to={`/product/${id}`} className="card">
-            <div className="card-media" />
-            <div className="card-body">
-              <h3>Model #{id}</h3>
-              <p>Lightweight, comfy, and stylish.</p>
-              <span className="price">$99.00</span>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
   );
 }
 
