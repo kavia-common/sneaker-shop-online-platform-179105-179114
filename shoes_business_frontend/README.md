@@ -1,82 +1,130 @@
-# Lightweight React Template for KAVIA
+# OceanKicks Sneakers Shop Frontend
 
-This project provides a minimal React template with a clean, modern UI and minimal dependencies.
+Modern, lightweight React app for browsing sneakers, managing a cart, and placing orders.
 
-## Features
+## Quick Start
 
-- **Lightweight**: No heavy UI frameworks - uses only vanilla CSS and React
-- **Modern UI**: Clean, responsive design with KAVIA brand styling
-- **Fast**: Minimal dependencies for quick loading times
-- **Simple**: Easy to understand and modify
+1) Install dependencies
+- npm install
 
-## Getting Started
+2) Create environment file
+- Copy .env.example to .env and adjust values:
+  - REACT_APP_API_BASE_URL=
+  - REACT_APP_USE_MOCKS=false
 
-In the project directory, you can run:
+3) Start the app
+- npm start
+- Open http://localhost:3000
 
-### `npm start`
+4) Build for production
+- npm run build
 
-Runs the app in development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Environment Configuration
 
-### `npm test`
+This app uses Create React App and reads env variables prefixed with REACT_APP_ at build time.
 
-Launches the test runner in interactive watch mode.
+Required variables (see .env.example):
+- REACT_APP_API_BASE_URL
+  Description: Base URL of the backend API (no trailing slash).
+  Example: http://localhost:4000 or https://api.example.com
 
-### `npm run build`
+- REACT_APP_USE_MOCKS
+  Description: "true" or "false" to force using local mock data.
+  Defaults: If not explicitly "true" or "false", the app automatically uses mocks when REACT_APP_API_BASE_URL is empty.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+How it works:
+- src/config.js provides getApiBaseUrl() and getUseMocks()
+- src/services/api.js switches between real backend calls and local mocks in src/services/mockData.js
 
-## Customization
+Common setups:
+- Local with mocks (no backend):
+  REACT_APP_API_BASE_URL=
+  REACT_APP_USE_MOCKS=true
 
-### Colors
+- Local with real backend:
+  REACT_APP_API_BASE_URL=http://localhost:4000
+  REACT_APP_USE_MOCKS=false
 
-The main brand colors are defined as CSS variables in `src/App.css`:
+- Production (real backend):
+  REACT_APP_API_BASE_URL=https://api.example.com
+  REACT_APP_USE_MOCKS=false
 
-```css
-:root {
-  --kavia-orange: #E87A41;
-  --kavia-dark: #1A1A1A;
-  --text-color: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --border-color: rgba(255, 255, 255, 0.1);
-}
-```
+Note: Changing .env requires restarting the dev server to take effect.
 
-### Components
+## Switching Between Mocks and Real API
 
-This template uses pure HTML/CSS components instead of a UI framework. You can find component styles in `src/App.css`. 
+- Mocks on:
+  - Set REACT_APP_USE_MOCKS=true, or leave REACT_APP_API_BASE_URL empty.
+  - Data served from src/services/mockData.js with simulated latency.
+- Real API on:
+  - Set REACT_APP_API_BASE_URL to your backend base URL and REACT_APP_USE_MOCKS=false.
+  - The app will call your backend via fetch using endpoints below.
 
-Common components include:
-- Buttons (`.btn`, `.btn-large`)
-- Container (`.container`)
-- Navigation (`.navbar`)
-- Typography (`.title`, `.subtitle`, `.description`)
+## Expected Backend Endpoints
 
-## Learn More
+The app expects a REST API with JSON responses:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- GET /products
+  Query params: q, category, size, sort (price-asc | price-desc)
+  Example: GET /products?q=Wave&category=Running&size=42&sort=price-asc
+  Response: Array of products
+- GET /products/:id
+  Path params: id (product identifier)
+  Response: Full product with sizes, colors, images, etc.
+- GET /products/:id/related?limit=4
+  Query params: limit (optional)
+  Response: Array of related products
+- POST /orders
+  Body: {
+    name, phone, address, delivery,
+    items: [{ id, name, price, size?, color?, qty }]
+  }
+  Response: { orderId, status, ... }
 
-### Code Splitting
+See src/services/api.js for how requests are constructed.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## CORS Guidance
 
-### Analyzing the Bundle Size
+When running the frontend at http://localhost:3000 and backend at another origin (e.g., http://localhost:4000), configure CORS on the backend:
+- Allow Origin: http://localhost:3000 (or your deployed site URL)
+- Allow Methods: GET, POST, OPTIONS
+- Allow Headers: Content-Type, Authorization (if applicable)
+- Credentials: false (unless you specifically need cookies or auth)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Typical issues:
+- CORS preflight fails: Ensure backend responds to OPTIONS with 204/200 and appropriate headers.
+- Mixed content in production: Use HTTPS for both frontend and backend, and ensure REACT_APP_API_BASE_URL uses https://.
 
-### Making a Progressive Web App
+## Scripts
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+- npm start
+  Runs the app in development mode on http://localhost:3000
 
-### Advanced Configuration
+- npm test
+  Launches jest in watch mode
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- npm run build
+  Builds the app for production in the build folder
 
-### Deployment
+## Repository Structure (frontend)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+- src/
+  - config.js: Reads env and decides API base + mocks
+  - services/api.js: API accessors (real or mocked)
+  - services/mockData.js: Mock data + simulated endpoints
+  - state/: Cart context and reducer
+  - pages/: Catalog, Product detail, Cart, Checkout, Order confirmation
+  - components/: Reusable UI components
+  - styles/: Theme and layout CSS
 
-### `npm run build` fails to minify
+## Troubleshooting
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- I changed .env but it didn’t update:
+  Restart the dev server (Ctrl+C then npm start). CRA reads env at startup.
+
+- API calls fail with CORS error:
+  Verify backend CORS headers include the frontend origin and OPTIONS handling.
+
+- Using mocks but still seeing network calls:
+  Ensure REACT_APP_USE_MOCKS=true and rebuild/restart the dev server.
+  Also verify REACT_APP_API_BASE_URL is empty or set REACT_APP_USE_MOCKS to "true".
