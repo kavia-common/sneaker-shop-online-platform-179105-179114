@@ -1,70 +1,62 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ProductCard from '../components/catalog/ProductCard';
 import Button from '../components/common/Button';
+import Loader from '../components/common/Loader';
+import ErrorState from '../components/common/ErrorState';
+import { fetchProducts } from '../services/api';
 
 /**
  * PUBLIC_INTERFACE
  * Catalog page - Renders a filterable/sortable product grid.
- * Local state handles:
- * - query: text search (optional)
- * - category: filter by category
- * - size: filter by size
- * - sort: 'price-asc' | 'price-desc'
+ * Now integrates with api.js and handles loading and error states.
  */
 export default function Catalog() {
-  // Mock catalog dataset for UI; replace later with API integration.
-  const products = useMemo(
-    () => ([
-      { id: 1, name: 'Wave Runner X', price: 129, category: 'Running', size: 42, tag: 'New' },
-      { id: 2, name: 'Harbor Court', price: 89, category: 'Casual', size: 41, tag: 'Hot' },
-      { id: 3, name: 'Aqua Sprint', price: 149, category: 'Running', size: 44 },
-      { id: 4, name: 'Coastline Pro', price: 199, category: 'Basketball', size: 45, tag: 'Pro' },
-      { id: 5, name: 'Breeze Lite', price: 79, category: 'Casual', size: 40 },
-      { id: 6, name: 'Marina Glide', price: 159, category: 'Training', size: 43 },
-      { id: 7, name: 'Tide High', price: 119, category: 'Basketball', size: 44 },
-      { id: 8, name: 'Pier Street', price: 99, category: 'Casual', size: 42 },
-    ]),
-    []
-  );
-
-  const categories = useMemo(
-    () => ['All', ...Array.from(new Set(products.map(p => p.category)))],
-    [products]
-  );
-  const sizes = useMemo(
-    () => ['All', ...Array.from(new Set(products.map(p => String(p.size))))],
-    [products]
-  );
-
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
   const [size, setSize] = useState('All');
   const [sort, setSort] = useState('price-asc');
 
-  const filteredSorted = useMemo(() => {
-    let list = [...products];
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-    // filter by category
-    if (category !== 'All') {
-      list = list.filter(p => p.category === category);
+  const load = async (signal) => {
+    setLoading(true);
+    setError('');
+    try {
+      const list = await fetchProducts({
+        q: query,
+        category,
+        size,
+        sort,
+      });
+      if (signal?.aborted) return;
+      setItems(list);
+    } catch (e) {
+      if (signal?.aborted) return;
+      setError(e?.message || 'Failed to load products.');
+    } finally {
+      if (!signal?.aborted) setLoading(false);
     }
-    // filter by size
-    if (size !== 'All') {
-      list = list.filter(p => String(p.size) === size);
-    }
-    // simple text search in name
-    const q = query.trim().toLowerCase();
-    if (q) {
-      list = list.filter(p => p.name.toLowerCase().includes(q));
-    }
-    // sort
-    list.sort((a, b) => {
-      if (sort === 'price-asc') return a.price - b.price;
-      if (sort === 'price-desc') return b.price - a.price;
-      return 0;
-    });
-    return list;
-  }, [products, category, size, query, sort]);
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    load(controller.signal);
+    return () => controller.abort();
+    // Trigger fetch when filters change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, category, size, sort]);
+
+  const categories = useMemo(() => {
+    const set = new Set(items.map(p => p.category).filter(Boolean));
+    return ['All', ...Array.from(set)];
+  }, [items]);
+
+  const sizes = useMemo(() => {
+    const set = new Set(items.map(p => String(p.size ?? '')).filter(Boolean));
+    return ['All', ...Array.from(set)];
+  }, [items]);
 
   const resetFilters = () => {
     setQuery('');
@@ -138,19 +130,33 @@ export default function Catalog() {
         </div>
       </section>
 
-      <div className="grid">
-        {filteredSorted.map((p) => (
-          <ProductCard key={p.id} product={p} />
-        ))}
-        {filteredSorted.length === 0 && (
-          <div className="empty-state card" role="status">
-            <div className="card-body">
-              <h3>No results</h3>
-              <p className="description">Try adjusting the filters or search query.</p>
+      {loading && (
+        <Loader message="Loading products..." />
+      )}
+
+      {!loading && error && (
+        <ErrorState
+          title="Unable to load products"
+          message={error}
+          onRetry={() => load()}
+        />
+      )}
+
+      {!loading && !error && (
+        <div className="grid">
+          {items.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+          {items.length === 0 && (
+            <div className="empty-state card" role="status">
+              <div className="card-body">
+                <h3>No results</h3>
+                <p className="description">Try adjusting the filters or search query.</p>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

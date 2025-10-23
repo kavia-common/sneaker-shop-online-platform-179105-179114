@@ -1,7 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Button from '../components/common/Button';
+import Loader from '../components/common/Loader';
+import ErrorState from '../components/common/ErrorState';
 import { useCart } from '../state/CartContext.jsx';
+import { fetchProductById, fetchRelatedProducts } from '../services/api';
 
 /**
  * PUBLIC_INTERFACE
@@ -12,51 +15,83 @@ export default function ProductDetail() {
   const { id } = useParams();
   const { addItem, setSidebarOpen } = useCart();
 
-  // Mocked product dataset; in a later step this can be replaced by API layer
-  const allProducts = useMemo(
-    () => ([
-      { id: 1, name: 'Wave Runner X', price: 129, category: 'Running', sizes: [40, 41, 42, 43, 44], colors: ['Navy', 'White', 'Black'], images: [1, 2, 3] },
-      { id: 2, name: 'Harbor Court', price: 89, category: 'Casual', sizes: [39, 41, 42], colors: ['White', 'Tan'], images: [1, 2] },
-      { id: 3, name: 'Aqua Sprint', price: 149, category: 'Running', sizes: [42, 44, 45], colors: ['Teal', 'Gray'], images: [1, 2, 3, 4] },
-      { id: 4, name: 'Coastline Pro', price: 199, category: 'Basketball', sizes: [44, 45, 46], colors: ['Black', 'Gold'], images: [1] },
-      { id: 5, name: 'Breeze Lite', price: 79, category: 'Casual', sizes: [40, 41], colors: ['White', 'Blue'], images: [1, 2] },
-      { id: 6, name: 'Marina Glide', price: 159, category: 'Training', sizes: [41, 42, 43], colors: ['Blue', 'Gray'], images: [1, 2, 3] },
-      { id: 7, name: 'Tide High', price: 119, category: 'Basketball', sizes: [43, 44], colors: ['Black', 'White'], images: [1, 2] },
-      { id: 8, name: 'Pier Street', price: 99, category: 'Casual', sizes: [42, 43], colors: ['White', 'Green'], images: [1, 2, 3] },
-    ]),
-    []
-  );
-
-  const product = useMemo(
-    () => allProducts.find(p => String(p.id) === String(id)) || allProducts[0],
-    [allProducts, id]
-  );
-
-  // Related: same category or price proximity
-  const related = useMemo(() => {
-    const sameCategory = allProducts
-      .filter(p => p.category === product.category && p.id !== product.id)
-      .slice(0, 4);
-    if (sameCategory.length >= 3) return sameCategory;
-    // fallback to fill with other items
-    const filler = allProducts.filter(p => p.id !== product.id).slice(0, Math.max(0, 4 - sameCategory.length));
-    return [...sameCategory, ...filler];
-  }, [allProducts, product]);
+  const [product, setProduct] = useState(null);
+  const [related, setRelated] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
 
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [size, setSize] = useState('');
   const [color, setColor] = useState('');
-  const [error, setError] = useState('');
+  const [validationError, setValidationError] = useState('');
+
+  const load = async (signal) => {
+    setLoading(true);
+    setErr('');
+    try {
+      const [p, r] = await Promise.all([
+        fetchProductById(id),
+        fetchRelatedProducts(id, 4),
+      ]);
+      if (signal?.aborted) return;
+      setProduct(p);
+      setRelated(r);
+    } catch (e) {
+      if (signal?.aborted) return;
+      setErr(e?.message || 'Failed to load product.');
+    } finally {
+      if (!signal?.aborted) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    load(controller.signal);
+    return () => controller.abort();
+  }, [id]);
 
   const onAddToCart = () => {
     if (!size || !color) {
-      setError('Please select a size and color.');
+      setValidationError('Please select a size and color.');
       return;
     }
-    setError('');
+    setValidationError('');
+    if (!product) return;
     addItem({ id: product.id, name: product.name, price: product.price, size, color, qty: 1 });
     setSidebarOpen(true);
   };
+
+  const images = useMemo(() => product?.images || [], [product]);
+  const sizes = useMemo(() => product?.sizes || [], [product]);
+  const colors = useMemo(() => product?.colors || [], [product]);
+
+  if (loading) {
+    return (
+      <div className="container">
+        <Loader message="Loading product..." />
+      </div>
+    );
+  }
+
+  if (err) {
+    return (
+      <div className="container">
+        <ErrorState title="Unable to load product" message={err} onRetry={() => load()} />
+        <div style={{ height: 8 }} />
+        <Button as={Link} to="/" variant="primary">Back to Catalog</Button>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="container">
+        <ErrorState title="Product not found" message="The requested product does not exist." />
+        <div style={{ height: 8 }} />
+        <Button as={Link} to="/" variant="primary">Back to Catalog</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="container">
@@ -70,35 +105,34 @@ export default function ProductDetail() {
 
       <div className="pd-header">
         <h1 className="title">{product.name}</h1>
-        <span className="price price-lg">${product.price.toFixed(2)}</span>
+        <span className="price price-lg">${Number(product.price || 0).toFixed(2)}</span>
       </div>
 
       <section className="pd-wrap">
         <ImageGallery
-          images={product.images}
+          images={images}
           selectedIndex={selectedImageIdx}
           onSelect={setSelectedImageIdx}
         />
         <div className="pd-info">
           <p className="description">
-            Premium performance sneaker inspired by the ocean: breathable mesh, cushioned midsole,
-            and durable outsole for all-day comfort with modern style.
+            {product.description || 'Premium performance sneaker inspired by the ocean: breathable mesh, cushioned midsole, and durable outsole for all-day comfort with modern style.'}
           </p>
 
           <div className="pd-options">
             <SizeSelector
-              sizes={product.sizes}
+              sizes={sizes}
               value={size}
               onChange={setSize}
             />
             <ColorSelector
-              colors={product.colors}
+              colors={colors}
               value={color}
               onChange={setColor}
             />
           </div>
 
-          {error && <div className="pd-error" role="alert">{error}</div>}
+          {validationError && <div className="pd-error" role="alert">{validationError}</div>}
 
           <div className="pd-actions">
             <Button variant="primary" size="lg" onClick={onAddToCart}>Add to Cart</Button>
@@ -107,7 +141,7 @@ export default function ProductDetail() {
 
           <div className="pd-meta">
             <div><strong>Category:</strong> {product.category}</div>
-            <div><strong>SKU:</strong> OK-{product.id.toString().padStart(4, '0')}</div>
+            <div><strong>SKU:</strong> OK-{String(product.id).padStart(4, '0')}</div>
           </div>
         </div>
       </section>
@@ -129,7 +163,7 @@ export default function ProductDetail() {
                   <span className="product-attr">{rp.category}</span>
                 </div>
                 <div className="product-price-row">
-                  <span className="price">${rp.price.toFixed(2)}</span>
+                  <span className="price">${Number(rp.price || 0).toFixed(2)}</span>
                 </div>
               </div>
             </Link>
