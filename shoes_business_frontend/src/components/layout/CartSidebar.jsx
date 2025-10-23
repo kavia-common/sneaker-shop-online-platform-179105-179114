@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../state/CartContext.jsx';
 
 /**
  * PUBLIC_INTERFACE
- * CartSidebar with slide-in/out behavior.
+ * CartSidebar with slide-in/out behavior, focus trap, Esc to close, and return-focus.
  * Props:
  * - open: boolean to control visibility
  * - onClose: function to close sidebar
@@ -12,22 +12,110 @@ import { useCart } from '../../state/CartContext.jsx';
 export default function CartSidebar({ open, onClose }) {
   const { items, subtotal, removeItem, updateQty } = useCart();
 
+  const panelRef = useRef(null);
+  const closeBtnRef = useRef(null);
+  const lastFocusedRef = useRef(null);
+
+  // Capture opener element to return focus after closing
+  useEffect(() => {
+    if (open) {
+      lastFocusedRef.current = document.activeElement;
+    }
+  }, [open]);
+
+  // Focus first interactive control when opened
+  useEffect(() => {
+    if (open && closeBtnRef.current) {
+      // Small timeout to ensure element is in DOM and visible
+      const t = setTimeout(() => {
+        closeBtnRef.current.focus();
+      }, 0);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
+
+  const handleKeyDown = useCallback((e) => {
+    if (!open) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      onClose?.();
+      return;
+    }
+    if (e.key === 'Tab') {
+      // Simple focus trap
+      const container = panelRef.current;
+      if (!container) return;
+      const focusable = container.querySelectorAll(
+        'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      const list = Array.from(focusable);
+      if (list.length === 0) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+  }, [open, onClose]);
+
+  // Attach keydown at document level while open
+  useEffect(() => {
+    if (!open) return;
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, handleKeyDown]);
+
+  // Return focus to last focused element when closing
+  useEffect(() => {
+    if (!open && lastFocusedRef.current && typeof lastFocusedRef.current.focus === 'function') {
+      const t = setTimeout(() => lastFocusedRef.current.focus(), 0);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
+
   return (
     <>
-      <div className={`backdrop ${open ? 'show' : ''}`} onClick={onClose} />
-      <aside className={`cart-sidebar ${open ? 'open' : ''}`} aria-hidden={!open} aria-label="Shopping cart panel">
+      <div
+        className={`backdrop ${open ? 'show' : ''}`}
+        onClick={onClose}
+        aria-hidden={!open}
+      />
+      <aside
+        className={`cart-sidebar ${open ? 'open' : ''}`}
+        aria-hidden={!open}
+        aria-label="Shopping cart panel"
+        role="dialog"
+        aria-modal="true"
+        ref={panelRef}
+      >
         <div className="cart-header">
-          <h3 style={{ margin: 0 }}>Your Cart</h3>
-          <button className="icon-btn" onClick={onClose} aria-label="Close cart">✕</button>
+          <h3 id="cart-heading" style={{ margin: 0 }}>Your Cart</h3>
+          <button
+            className="icon-btn"
+            onClick={onClose}
+            aria-label="Close cart"
+            ref={closeBtnRef}
+          >
+            ✕
+          </button>
         </div>
-        <div className="cart-body">
+        <div className="cart-body" role="document" aria-labelledby="cart-heading">
           {items.length === 0 ? (
-            <p className="description">Your selected items will appear here.</p>
+            <p className="description" role="status" aria-live="polite">Your selected items will appear here.</p>
           ) : (
             <div className="cs-list">
               {items.map((i, idx) => (
-                <div className="cart-item" key={`${i.id}-${i.size ?? ''}-${i.color ?? ''}-${idx}`}>
-                  <div className="thumb" />
+                <div className="cart-item" key={`${i.id}-${i.size ?? ''}-${i.color ?? ''}-${idx}`} role="group" aria-label={`${i.name}${i.size ? `, size ${i.size}` : ''}${i.color ? `, color ${i.color}` : ''}`}>
+                  {/* In a real app, this would be an <img>. Use alt text placeholder here for semantics. */}
+                  <div className="thumb" role="img" aria-label={`${i.name} thumbnail`} />
                   <div className="meta">
                     <div className="name">{i.name}</div>
                     <div className="muted">
@@ -38,7 +126,7 @@ export default function CartSidebar({ open, onClose }) {
                   </div>
                   <div className="qty-controls" style={{ display: 'grid', gap: 4, justifyItems: 'center' }}>
                     <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-                      <button className="btn btn-ghost" onClick={() => updateQty(i, Math.max(1, i.qty - 1))} aria-label="Decrease quantity">−</button>
+                      <button className="btn btn-ghost" onClick={() => updateQty(i, Math.max(1, i.qty - 1))} aria-label={`Decrease quantity for ${i.name}`}>−</button>
                       <input
                         className="qty-input"
                         type="number"
@@ -48,11 +136,11 @@ export default function CartSidebar({ open, onClose }) {
                           const v = parseInt(e.target.value || '1', 10);
                           updateQty(i, isNaN(v) ? 1 : Math.max(1, v));
                         }}
-                        aria-label="Quantity"
+                        aria-label={`Quantity for ${i.name}`}
                       />
-                      <button className="btn btn-ghost" onClick={() => updateQty(i, i.qty + 1)} aria-label="Increase quantity">+</button>
+                      <button className="btn btn-ghost" onClick={() => updateQty(i, i.qty + 1)} aria-label={`Increase quantity for ${i.name}`}>+</button>
                     </div>
-                    <button className="btn btn-secondary" onClick={() => removeItem(i)} aria-label="Remove item">
+                    <button className="btn btn-secondary" onClick={() => removeItem(i)} aria-label={`Remove ${i.name} from cart`}>
                       Remove
                     </button>
                   </div>
@@ -62,11 +150,16 @@ export default function CartSidebar({ open, onClose }) {
           )}
         </div>
         <div className="cart-footer">
-          <div className="total">
+          <div className="total" aria-live="polite">
             <span>Total</span>
             <strong>${subtotal.toFixed(2)}</strong>
           </div>
-          <Link to="/checkout" className="btn btn-primary" onClick={onClose} aria-disabled={items.length === 0}>
+          <Link
+            to="/checkout"
+            className="btn btn-primary"
+            onClick={onClose}
+            aria-disabled={items.length === 0}
+          >
             Checkout
           </Link>
         </div>

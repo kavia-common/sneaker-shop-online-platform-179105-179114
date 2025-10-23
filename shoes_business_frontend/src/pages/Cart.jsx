@@ -43,10 +43,10 @@ export default function Cart() {
           )}
         </div>
 
-        <aside className="cart-summary card">
+        <aside className="cart-summary card" aria-label="Order summary">
           <div className="card-body">
             <h3>Order Summary</h3>
-            <div className="summary-row">
+            <div className="summary-row" aria-live="polite" aria-atomic="true">
               <span>Subtotal</span>
               <strong className="price">${subtotal.toFixed(2)}</strong>
             </div>

@@ -14,7 +14,7 @@ export default function ProductCard({ product }) {
 
   return (
     <Link to={`/product/${id}`} className="card product-card" aria-label={`${name}, ${category}, size ${size}`}>
-      <div className="card-media product-card-media" />
+      <div className="card-media product-card-media" role="img" aria-label={`${name} - ${category}`} />
       <div className="card-body product-card-body">
         <div className="product-card-top">
           <h3 className="product-name">{name}</h3>
@@ -22,7 +22,7 @@ export default function ProductCard({ product }) {
         </div>
         <div className="product-meta">
           <span className="product-attr">{category}</span>
-          <span className="dot">•</span>
+          <span className="dot" aria-hidden="true">•</span>
           <span className="product-attr">Size {size}</span>
         </div>
         <div className="product-price-row">

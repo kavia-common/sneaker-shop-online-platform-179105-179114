@@ -11,7 +11,7 @@ import PropTypes from 'prop-types';
  */
 export default function ErrorState({ title = 'Something went wrong', message = 'Please try again.', onRetry }) {
   return (
-    <div className="card" role="alert" aria-live="assertive">
+    <div className="card" role="alert" aria-live="assertive" aria-atomic="true">
       <div className="card-body">
         <h3 style={{ color: 'var(--color-error)', marginTop: 0 }}>{title}</h3>
         <p className="description">{message}</p>

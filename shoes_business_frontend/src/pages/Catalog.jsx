@@ -148,7 +148,7 @@ export default function Catalog() {
             <ProductCard key={p.id} product={p} />
           ))}
           {items.length === 0 && (
-            <div className="empty-state card" role="status">
+            <div className="empty-state card" role="status" aria-live="polite" aria-atomic="true">
               <div className="card-body">
                 <h3>No results</h3>
                 <p className="description">Try adjusting the filters or search query.</p>

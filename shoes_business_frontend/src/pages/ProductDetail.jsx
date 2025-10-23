@@ -154,7 +154,7 @@ export default function ProductDetail() {
         <div className="grid">
           {related.map((rp) => (
             <Link to={`/product/${rp.id}`} key={rp.id} className="card product-card" aria-label={`${rp.name}, ${rp.category}`}>
-              <div className="card-media product-card-media" />
+              <div className="card-media product-card-media" role="img" aria-label={`${rp.name} - ${rp.category}`} />
               <div className="card-body product-card-body">
                 <div className="product-card-top">
                   <h3 className="product-name">{rp.name}</h3>
@@ -183,7 +183,12 @@ function ImageGallery({ images = [], selectedIndex = 0, onSelect = () => {} }) {
     <div className="pd-gallery">
       <div className="pd-hero" aria-label="Product image">
         {/* Placeholder hero image surface; could be an <img src=...> in real integration */}
-        <div className="pd-hero-media" />
+        <div
+          className="pd-hero-media"
+          role="img"
+          aria-label={`Main image ${selectedIndex + 1} of ${images.length || 1}`}
+          aria-live="polite"
+        />
       </div>
       <div className="pd-thumbs" role="list">
         {images.map((_, idx) => {
@@ -196,7 +201,7 @@ function ImageGallery({ images = [], selectedIndex = 0, onSelect = () => {} }) {
               aria-pressed={active}
               onClick={() => onSelect(idx)}
             >
-              <div className="pd-thumb-media" />
+              <div className="pd-thumb-media" role="img" aria-label={`Thumbnail ${idx + 1}`} />
             </button>
           );
         })}

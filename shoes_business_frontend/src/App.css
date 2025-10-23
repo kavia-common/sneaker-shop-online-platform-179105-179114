@@ -1,4 +1,5 @@
 /* Base App overrides leveraging theme variables */
 .app-main {
   padding: 1rem 0 2rem;
+  outline: none;
 }

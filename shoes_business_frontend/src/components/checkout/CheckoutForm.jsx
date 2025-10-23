@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Button from '../common/Button';
 
@@ -14,6 +14,7 @@ export default function CheckoutForm({ onSubmit }) {
   const [address, setAddress] = useState('');
   const [delivery, setDelivery] = useState('standard');
   const [errors, setErrors] = useState({});
+  const liveRef = useRef(null);
 
   const validate = () => {
     const e = {};
@@ -31,8 +32,18 @@ export default function CheckoutForm({ onSubmit }) {
     onSubmit({ name, phone, address, delivery });
   };
 
+  // Announce validation changes
+  useEffect(() => {
+    if (!liveRef.current) return;
+    const msgs = Object.values(errors);
+    liveRef.current.textContent = msgs.join('. ');
+  }, [errors]);
+
   return (
-    <form onSubmit={handleSubmit} className="checkout-form">
+    <form onSubmit={handleSubmit} className="checkout-form" noValidate aria-describedby="checkout-errors">
+      {/* live region for validation feedback */}
+      <div id="checkout-errors" ref={liveRef} className="visually-hidden" aria-live="assertive" aria-atomic="true" />
+
       <div className="form-grid">
         <div className="form-field">
           <label className="form-label" htmlFor="name">Full Name</label>
@@ -43,8 +54,10 @@ export default function CheckoutForm({ onSubmit }) {
             onChange={(e) => setName(e.target.value)}
             placeholder="Your full name"
             autoComplete="name"
+            aria-invalid={Boolean(errors.name)}
+            aria-describedby={errors.name ? 'name-error' : undefined}
           />
-          {errors.name && <div className="form-error">{errors.name}</div>}
+          {errors.name && <div id="name-error" className="form-error" role="alert">{errors.name}</div>}
         </div>
 
         <div className="form-field">
@@ -56,8 +69,10 @@ export default function CheckoutForm({ onSubmit }) {
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+1 555 123 4567"
             autoComplete="tel"
+            aria-invalid={Boolean(errors.phone)}
+            aria-describedby={errors.phone ? 'phone-error' : undefined}
           />
-          {errors.phone && <div className="form-error">{errors.phone}</div>}
+          {errors.phone && <div id="phone-error" className="form-error" role="alert">{errors.phone}</div>}
         </div>
 
         <div className="form-field form-col-span">
@@ -70,8 +85,10 @@ export default function CheckoutForm({ onSubmit }) {
             onChange={(e) => setAddress(e.target.value)}
             placeholder="Street, City, ZIP"
             autoComplete="street-address"
+            aria-invalid={Boolean(errors.address)}
+            aria-describedby={errors.address ? 'address-error' : undefined}
           />
-          {errors.address && <div className="form-error">{errors.address}</div>}
+          {errors.address && <div id="address-error" className="form-error" role="alert">{errors.address}</div>}
         </div>
 
         <div className="form-field">
@@ -81,12 +98,14 @@ export default function CheckoutForm({ onSubmit }) {
             className={`form-input ${errors.delivery ? 'error' : ''}`}
             value={delivery}
             onChange={(e) => setDelivery(e.target.value)}
+            aria-invalid={Boolean(errors.delivery)}
+            aria-describedby={errors.delivery ? 'delivery-error' : undefined}
           >
             <option value="standard">Standard (3-5 days)</option>
             <option value="express">Express (1-2 days)</option>
             <option value="pickup">Store Pickup (Free)</option>
           </select>
-          {errors.delivery && <div className="form-error">{errors.delivery}</div>}
+          {errors.delivery && <div id="delivery-error" className="form-error" role="alert">{errors.delivery}</div>}
         </div>
       </div>
 

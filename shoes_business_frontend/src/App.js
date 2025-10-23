@@ -16,8 +16,11 @@ function App() {
 
   return (
     <div className="app">
+      {/* Skip link for keyboard users */}
+      <a href="#main-content" className="visually-hidden-focusable">Skip to main content</a>
+
       <Header cartCount={itemCount} onToggleCart={toggleCart} />
-      <main className="app-main">
+      <main id="main-content" className="app-main" role="main" tabIndex="-1">
         <AppRoutes />
       </main>
       <Footer />

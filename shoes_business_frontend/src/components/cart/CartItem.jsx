@@ -19,7 +19,7 @@ export default function CartItem({ item, onQtyChange, onRemove }) {
     <div className="cart-line card">
       <div className="card-body">
         <div className="cart-line-inner">
-          <div className="cart-thumb" />
+          <div className="cart-thumb" role="img" aria-label={`${name} thumbnail`} />
           <div className="cart-meta">
             <div className="cart-name">{name}</div>
             <div className="cart-submeta">
