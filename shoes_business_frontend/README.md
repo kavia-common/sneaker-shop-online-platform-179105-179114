@@ -10,7 +10,7 @@ Modern, lightweight React app for browsing sneakers, managing a cart, and placin
 2) Create environment file
 - Copy .env.example to .env and adjust values:
   - REACT_APP_API_BASE_URL=
-  - REACT_APP_USE_MOCKS=false
+  - REACT_APP_USE_MOCKS=true
 
 3) Start the app
 - npm start
@@ -18,6 +18,15 @@ Modern, lightweight React app for browsing sneakers, managing a cart, and placin
 
 4) Build for production
 - npm run build
+
+## Routes
+
+- / (Catalog)
+- /product/:id (Product Detail)
+- /cart (Cart)
+- /checkout (Checkout)
+- /order-confirmation (Order Confirmation)
+- Catch-all → Not Found
 
 ## Environment Configuration
 
@@ -101,7 +110,7 @@ Typical issues:
   Runs the app in development mode on http://localhost:3000
 
 - npm test
-  Launches jest in watch mode
+  Launches jest in watch mode. The CRA placeholder test has been replaced with a simple smoke test to avoid failures.
 
 - npm run build
   Builds the app for production in the build folder
@@ -116,15 +125,3 @@ Typical issues:
   - pages/: Catalog, Product detail, Cart, Checkout, Order confirmation
   - components/: Reusable UI components
   - styles/: Theme and layout CSS
-
-## Troubleshooting
-
-- I changed .env but it didn’t update:
-  Restart the dev server (Ctrl+C then npm start). CRA reads env at startup.
-
-- API calls fail with CORS error:
-  Verify backend CORS headers include the frontend origin and OPTIONS handling.
-
-- Using mocks but still seeing network calls:
-  Ensure REACT_APP_USE_MOCKS=true and rebuild/restart the dev server.
-  Also verify REACT_APP_API_BASE_URL is empty or set REACT_APP_USE_MOCKS to "true".
