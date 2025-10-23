@@ -21,7 +21,7 @@ export default function Cart() {
       <h1 className="title">Your Cart</h1>
       <p className="description">Review your items before checkout.</p>
 
-      <section className="cart-page">
+      <section className="cart-page split">
         <div className="cart-list">
           {items.length === 0 ? (
             <div className="card">

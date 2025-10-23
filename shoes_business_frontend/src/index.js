@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import './styles/theme.css';
+import './styles/layout.css';
+import './styles/components.css';
 import App from './App';
 import { CartProvider } from './state/CartContext.jsx';
 

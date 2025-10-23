@@ -15,9 +15,9 @@ export default function CartSidebar({ open, onClose }) {
   return (
     <>
       <div className={`backdrop ${open ? 'show' : ''}`} onClick={onClose} />
-      <aside className={`cart-sidebar ${open ? 'open' : ''}`} aria-hidden={!open}>
+      <aside className={`cart-sidebar ${open ? 'open' : ''}`} aria-hidden={!open} aria-label="Shopping cart panel">
         <div className="cart-header">
-          <h3>Your Cart</h3>
+          <h3 style={{ margin: 0 }}>Your Cart</h3>
           <button className="icon-btn" onClick={onClose} aria-label="Close cart">✕</button>
         </div>
         <div className="cart-body">

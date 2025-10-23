@@ -41,7 +41,7 @@ export default function Checkout() {
       <h1 className="title">Checkout</h1>
       <p className="description">Enter your details and confirm your order.</p>
 
-      <section className="checkout-wrap">
+      <section className="checkout-wrap split">
         <div className="checkout-left card">
           <div className="card-body">
             <CheckoutForm onSubmit={onPlaceOrder} />

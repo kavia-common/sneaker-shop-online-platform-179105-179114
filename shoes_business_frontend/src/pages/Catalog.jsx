@@ -143,7 +143,7 @@ export default function Catalog() {
       )}
 
       {!loading && !error && (
-        <div className="grid">
+        <div className="grid grid-4">
           {items.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
