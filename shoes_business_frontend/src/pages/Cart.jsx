@@ -1,38 +1,19 @@
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import CartItem from '../components/cart/CartItem';
 import Button from '../components/common/Button';
+import { useCart } from '../state/CartContext.jsx';
 
 /**
  * PUBLIC_INTERFACE
- * Cart - Displays cart items with quantity controls and subtotal.
- * Uses mock local state to represent cart items for minimal flow.
+ * Cart - Displays cart items with quantity controls and subtotal using global cart state.
  */
 export default function Cart() {
   const navigate = useNavigate();
-  // Minimal mock cart state for demonstration
-  const [items, setItems] = useState([
-    { id: 1, name: 'Wave Runner X', price: 129, qty: 1, size: 42 },
-    { id: 2, name: 'Harbor Court', price: 89, qty: 2, size: 41 },
-  ]);
-
-  const subtotal = useMemo(
-    () => items.reduce((sum, i) => sum + i.price * i.qty, 0),
-    [items]
-  );
-
-  const updateQty = (id, qty) => {
-    setItems(prev =>
-      prev.map(i => (i.id === id ? { ...i, qty: Math.max(1, qty) } : i))
-    );
-  };
-
-  const removeItem = (id) => {
-    setItems(prev => prev.filter(i => i.id !== id));
-  };
+  const { items, subtotal, updateQty, removeItem } = useCart();
 
   const goCheckout = () => {
-    navigate('/checkout', { state: { cartItems: items, subtotal } });
+    navigate('/checkout');
   };
 
   return (
@@ -51,12 +32,12 @@ export default function Cart() {
               </div>
             </div>
           ) : (
-            items.map((i) => (
+            items.map((i, idx) => (
               <CartItem
-                key={i.id}
+                key={`${i.id}-${i.size ?? ''}-${i.color ?? ''}-${idx}`}
                 item={i}
-                onQtyChange={(qty) => updateQty(i.id, qty)}
-                onRemove={() => removeItem(i.id)}
+                onQtyChange={(qty) => updateQty(i, qty)}
+                onRemove={() => removeItem(i)}
               />
             ))
           )}

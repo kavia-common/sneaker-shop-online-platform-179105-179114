@@ -1,27 +1,27 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './App.css';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import CartSidebar from './components/layout/CartSidebar';
 import AppRoutes from './routes/AppRoutes';
+import { useCart } from './state/CartContext.jsx';
 
 // PUBLIC_INTERFACE
 function App() {
-  /** App shell with header, routes, cart sidebar, and footer. */
-  const [cartOpen, setCartOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(1); // placeholder count
+  /** App shell with header, routes, cart sidebar, and footer. Uses global cart context. */
+  const { itemCount, sidebarOpen, setSidebarOpen } = useCart();
 
-  const toggleCart = () => setCartOpen((v) => !v);
-  const closeCart = () => setCartOpen(false);
+  const toggleCart = () => setSidebarOpen(!sidebarOpen);
+  const closeCart = () => setSidebarOpen(false);
 
   return (
     <div className="app">
-      <Header cartCount={cartCount} onToggleCart={toggleCart} />
+      <Header cartCount={itemCount} onToggleCart={toggleCart} />
       <main className="app-main">
         <AppRoutes />
       </main>
       <Footer />
-      <CartSidebar open={cartOpen} onClose={closeCart} />
+      <CartSidebar open={sidebarOpen} onClose={closeCart} />
     </div>
   );
 }

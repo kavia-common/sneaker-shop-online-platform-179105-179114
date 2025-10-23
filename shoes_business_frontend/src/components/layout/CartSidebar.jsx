@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useCart } from '../../state/CartContext.jsx';
 
 /**
  * PUBLIC_INTERFACE
@@ -9,6 +10,8 @@ import { Link } from 'react-router-dom';
  * - onClose: function to close sidebar
  */
 export default function CartSidebar({ open, onClose }) {
+  const { items, subtotal, removeItem, updateQty } = useCart();
+
   return (
     <>
       <div className={`backdrop ${open ? 'show' : ''}`} onClick={onClose} />
@@ -18,22 +21,54 @@ export default function CartSidebar({ open, onClose }) {
           <button className="icon-btn" onClick={onClose} aria-label="Close cart">✕</button>
         </div>
         <div className="cart-body">
-          <p className="description">Your selected items will appear here.</p>
-          <div className="cart-item">
-            <div className="thumb" />
-            <div className="meta">
-              <div className="name">Sneaker Model #1</div>
-              <div className="price">$99.00</div>
+          {items.length === 0 ? (
+            <p className="description">Your selected items will appear here.</p>
+          ) : (
+            <div className="cs-list">
+              {items.map((i, idx) => (
+                <div className="cart-item" key={`${i.id}-${i.size ?? ''}-${i.color ?? ''}-${idx}`}>
+                  <div className="thumb" />
+                  <div className="meta">
+                    <div className="name">{i.name}</div>
+                    <div className="muted">
+                      {typeof i.size !== 'undefined' ? <>Size {i.size}</> : null}
+                      {i.color ? <>{typeof i.size !== 'undefined' ? ' · ' : ''}{i.color}</> : null}
+                    </div>
+                    <div className="price">${(i.price * i.qty).toFixed(2)}</div>
+                  </div>
+                  <div className="qty-controls" style={{ display: 'grid', gap: 4, justifyItems: 'center' }}>
+                    <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                      <button className="btn btn-ghost" onClick={() => updateQty(i, Math.max(1, i.qty - 1))} aria-label="Decrease quantity">−</button>
+                      <input
+                        className="qty-input"
+                        type="number"
+                        min="1"
+                        value={i.qty}
+                        onChange={(e) => {
+                          const v = parseInt(e.target.value || '1', 10);
+                          updateQty(i, isNaN(v) ? 1 : Math.max(1, v));
+                        }}
+                        aria-label="Quantity"
+                      />
+                      <button className="btn btn-ghost" onClick={() => updateQty(i, i.qty + 1)} aria-label="Increase quantity">+</button>
+                    </div>
+                    <button className="btn btn-secondary" onClick={() => removeItem(i)} aria-label="Remove item">
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-            <button className="icon-btn" aria-label="Remove item">−</button>
-          </div>
+          )}
         </div>
         <div className="cart-footer">
           <div className="total">
             <span>Total</span>
-            <strong>$99.00</strong>
+            <strong>${subtotal.toFixed(2)}</strong>
           </div>
-          <Link to="/checkout" className="btn btn-primary" onClick={onClose}>Checkout</Link>
+          <Link to="/checkout" className="btn btn-primary" onClick={onClose} aria-disabled={items.length === 0}>
+            Checkout
+          </Link>
         </div>
       </aside>
     </>

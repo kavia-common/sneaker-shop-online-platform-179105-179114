@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Button from '../components/common/Button';
+import { useCart } from '../state/CartContext.jsx';
 
 /**
  * PUBLIC_INTERFACE
@@ -9,6 +10,7 @@ import Button from '../components/common/Button';
  */
 export default function ProductDetail() {
   const { id } = useParams();
+  const { addItem, setSidebarOpen } = useCart();
 
   // Mocked product dataset; in a later step this can be replaced by API layer
   const allProducts = useMemo(
@@ -52,8 +54,8 @@ export default function ProductDetail() {
       return;
     }
     setError('');
-    // Future integration: dispatch add to cart action here
-    alert(`Added "${product.name}" (Size ${size}, Color ${color}) to cart!`);
+    addItem({ id: product.id, name: product.name, price: product.price, size, color, qty: 1 });
+    setSidebarOpen(true);
   };
 
   return (

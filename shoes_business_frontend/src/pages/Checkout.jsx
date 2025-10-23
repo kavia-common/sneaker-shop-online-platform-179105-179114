@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import React from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import CheckoutForm from '../components/checkout/CheckoutForm';
 import OrderSummary from '../components/checkout/OrderSummary';
 import Button from '../components/common/Button';
+import { useCart } from '../state/CartContext.jsx';
 
 /**
  * PUBLIC_INTERFACE
@@ -11,32 +12,21 @@ import Button from '../components/common/Button';
  */
 export default function Checkout() {
   const navigate = useNavigate();
-  const { state } = useLocation();
-  const cartItems = useMemo(() => state?.cartItems ?? [], [state]);
-  const subtotal = useMemo(
-    () => (state?.subtotal != null ? state.subtotal : cartItems.reduce((s, i) => s + i.price * i.qty, 0)),
-    [state, cartItems]
-  );
+  const { items, subtotal, clearCart } = useCart();
 
   const onPlaceOrder = (payload) => {
-    // Basic mock "place order"
     const orderId = 'OK-' + Math.random().toString(36).slice(2, 8).toUpperCase();
-    // In a real app, clear cart in global state or storage. Here, we just navigate and pass state.
+    clearCart();
     navigate('/order-confirmation', {
       state: {
         orderId,
         name: payload.name,
-        phone: payload.phone,
-        address: payload.address,
-        delivery: payload.delivery,
-        cartItems,
-        subtotal,
       },
       replace: true,
     });
   };
 
-  if (!cartItems || cartItems.length === 0) {
+  if (!items || items.length === 0) {
     return (
       <div className="container">
         <h1 className="title">Checkout</h1>
@@ -60,7 +50,7 @@ export default function Checkout() {
 
         <aside className="checkout-right card">
           <div className="card-body">
-            <OrderSummary items={cartItems} subtotal={subtotal} />
+            <OrderSummary items={items} subtotal={subtotal} />
           </div>
         </aside>
       </section>
